@@ -1,7 +1,14 @@
+function render(node, container) {
+  
+}
+
 class EditorView {
-  constructor(dom) {
+  constructor(dom, { state }) {
     this.dom = dom;
+    this.state = state;
+    
     this.onBeforeInput = this.onBeforeInput.bind(this);
+    
     this.dom.addEventListener("beforeinput", this.onBeforeInput);
     this.dom.contentEditable = true;
   }
@@ -9,13 +16,19 @@ class EditorView {
   destroy() {
     this.dom.removeEventListener("beforeinput", this.onBeforeInput);
   }
+  
+  dispatch(tr) {
+    this.state = this.state.apply(tr);
+  }
 
   onBeforeInput(event) {
     event.preventDefault();
 
-    switch (event.type) {
+    switch (event.inputType) {
       case "insertText": {
-        alert(event.data);
+        const { tr } = this.state;
+        tr.insertText(event.data);
+        this.dispatch(tr);
       }
     }
   }
