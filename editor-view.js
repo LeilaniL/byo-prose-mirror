@@ -1,0 +1,3 @@
+class EditorView {
+  constructor()
+}
