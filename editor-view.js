@@ -1,4 +1,5 @@
-function render(node, container) {
+function render(domSpec) {
+  const [tagName,  = domSpec
   
 }
 
