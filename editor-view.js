@@ -32,19 +32,35 @@ class View {
     const from = Math.min(anchor, head);
     const to = Math.max(anchor, head);
     
-    let offset = 0;
     let index = 0;
+    let offset = 0;
     
-    while (offset)
-    
-    for (const child of this.children) {
-      if (from < offset + child.size) {
+    while (index < this.children.length) {
+      const child = this.children[index];
+      const isLastChild = index === this.children.length - 1;
+      const nextOffset = offset + child.size;
+      
+      if (nextOffset > from || nextOffset === from && isLastChild) {
         child.setSelection(anchor - offset, head - offset);
+        break;
       }
+      
+      index = index + 1;
+      offset = nextOffset;
     }
     
+    while (index < this.children.length) {
+      const child = this.children[index];
+      const isLastChild = index === this.children.length - 1;
+      const nextOffset = offset + child.size;
       
-      child.setSelection()
+      if (nextOffset > to || nextOffset === to && isLastChild) {
+        child.setSelection(anchor - offset, head - offset);
+        break;
+      }
+      
+      index = index + 1;
+      offset = nextOffset;
     }
   }
   
@@ -61,6 +77,13 @@ class TextView extends View {
 
   update(node) {
     return node === this.node;
+  }
+  
+  setSelection(anchor, head) {
+    const { size } = this;
+    if (anchor <= size) {
+      return 
+    }
   }
   
   get size() {
