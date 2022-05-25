@@ -247,23 +247,36 @@ class EditorView extends NodeView {
   }
 
   onSelectionChange(event) {
+    const { doc, tr } = this.state;
+    
     const domSelection = document.getSelection();
 
-    try {
-      const { anchorNode, anchorOffset } = domSelection;
-      const anchorView = anchorNode.__view;
-      const anchor = anchorView.pos + anchorView.border + anchorOffset;
+    const { anchorNode, anchorOffset } = domSelection;
+    const anchorView = anchorNode.__view;
+    const anchor = anchorView.pos + anchorView.border + anchorOffset;
+    const $anchor = doc.resolve(anchor);
 
-      const { focusNode, focusOffset } = domSelection;
-      const focusView = focusNode.__view;
-      const head = focusView.pos + focusView.border + focusOffset;
+    const { focusNode, focusOffset } = domSelection;
+    const focusView = focusNode.__view;
+    const head = focusView.pos + focusView.border + focusOffset;
+    const $head = doc.resolve(head);
 
-      const { doc, tr } = this.state;
-      const selection = TextSelection.create(doc, anchor, head);
+    const reversed = head < anchor;
+    const [$from, $to] = reversed ? [$head, $anchor]
+    const resolved
+    const [$from, $to] = anchor <= head ?
+          [doc.resolve(anchor), doc.resolve(head)]
+    : [doc.resolve(head), doc.resolve(anchor)];
+    
+      const selection = TextSelection.between($from, $to);
       tr.setSelection(selection);
-      this.dispatch(tr);
-    } catch (error) {
-      console.warn(error);
+    } else {
+      const $from = doc.resolve(head);
+      const $to = doc.resolve(anchor);
+      const selection = TextSelection.between($from, $to, true);
+      tr.setSelection(selection);
     }
+
+    this.dispatch(tr);
   }
 }
