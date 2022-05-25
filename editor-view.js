@@ -28,42 +28,44 @@ class View {
     return false;
   }
   
+  domFromPos()
+
   setSelection(anchor, head) {
     const from = Math.min(anchor, head);
     const to = Math.max(anchor, head);
-    
+
     let index = 0;
     let offset = 0;
-    
+
     while (index < this.children.length) {
       const child = this.children[index];
       const isLastChild = index === this.children.length - 1;
       const nextOffset = offset + child.size;
-      
-      if (nextOffset > from || nextOffset === from && isLastChild) {
+
+      if (nextOffset > from || (nextOffset === from && isLastChild)) {
         child.setSelection(anchor - offset, head - offset);
         break;
       }
-      
+
       index = index + 1;
       offset = nextOffset;
     }
-    
+
     while (index < this.children.length) {
       const child = this.children[index];
       const isLastChild = index === this.children.length - 1;
       const nextOffset = offset + child.size;
-      
-      if (nextOffset > to || nextOffset === to && isLastChild) {
+
+      if (nextOffset > to || (nextOffset === to && isLastChild)) {
         child.setSelection(anchor - offset, head - offset);
         break;
       }
-      
+
       index = index + 1;
       offset = nextOffset;
     }
   }
-  
+
   get size() {
     return this.children.reduce((size, child) => size + child.size, 0);
   }
@@ -78,14 +80,37 @@ class TextView extends View {
   update(node) {
     return node === this.node;
   }
-  
+
   setSelection(anchor, head) {
     const { size } = this;
-    if (anchor <= size) {
-      return 
+
+    const selection = document.getSelection();
+
+    if (selection.empty()) {
+      const range = document.createRange();
+      selection.addRange(range);
     }
+
+    let { anchorNode, anchorOffset, focusNode, focusOffset } = selection;
+
+    if (anchor <= size) {
+      anchorNode = this.dom;
+      anchorOffset = anchor;
+    }
+
+    if (head <= size) {
+      focusNode = this.dom;
+      focusOffset = head;
+    }
+
+    selection.setBaseAndExtent(
+      anchorNode,
+      anchorOffset,
+      focusNode,
+      focusOffset
+    );
   }
-  
+
   get size() {
     return this.node.text.length;
   }
@@ -140,7 +165,7 @@ class NodeView extends View {
       this.contentDOM.remove(this.contentDOM.lastChild);
     }
   }
-  
+
   get size() {
     return this.node.nodeSize;
   }
@@ -173,6 +198,9 @@ class EditorView extends NodeView {
 
   update(node) {
     super.update(node);
+    
+    const { anchor, head } = this.state.selection;
+    this.setSelection(anchor, head);
   }
 
   onBeforeInput(event) {
