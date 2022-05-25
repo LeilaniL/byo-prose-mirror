@@ -7,12 +7,21 @@ function toDOM(node) {
   return DOMSerializer.renderSpec(document, outputSpec);
 }
 
+function selectionToDOM(selection) {
+  let anchorNode;
+  let anchorOffset;
+  let focusNode;
+  let focusOffset;
+  selection
+}
+
 class View {
   constructor(parent, children, dom, contentDOM) {
     this.parent = parent;
     this.children = children;
     this.dom = dom;
     this.contentDOM = contentDOM;
+    this.dom.__view = this;
   }
 
   destroy() {
@@ -25,6 +34,21 @@ class View {
   
   update(node) {
     return false;
+  }
+
+  get pos() {
+    if (!this.parent) {
+      return -1;
+    }
+
+    const index = this.parent.children.indexOf(this);
+    console.log('index', index)
+    const precedingSiblings = this.parent.children.slice(0, index);
+    console.log(precedingSiblings);
+    return precedingSiblings.reduce(
+      (pos, sibling) => pos + sibling.nodeSize,
+      this.parent.pos + 1
+    );
   }
 }
 
@@ -48,7 +72,6 @@ class NodeView extends View {
 
   update(node) {
     if (!this.node.sameMarkup(node)) {
-      console.log("cannot update", node.type.name);
       return false;
     }
 
@@ -66,7 +89,6 @@ class NodeView extends View {
           return;
         }
 
-        console.log("destroy", childNodeView.node.type.name);
         childNodeView.destroy();
       }
 
@@ -89,19 +111,6 @@ class NodeView extends View {
       this.children.pop().destroy();
       this.contentDOM.remove(this.contentDOM.lastChild);
     }
-  }
-
-  get pos() {
-    if (!this.parent) {
-      return 0;
-    }
-
-    const index = this.parent.children.indexOf(this);
-    const precedingSiblings = this.parent.children.slice(0, index);
-    return precedingSiblings.reduce(
-      (pos, child) => pos + child.nodeSize,
-      this.parent.pos
-    );
   }
 }
 
@@ -128,6 +137,12 @@ class EditorView extends NodeView {
   setState(newState) {
     this.state = newState;
     this.update(this.state.doc);
+  }
+  
+  update(node) {
+    super.update(node);
+    const 
+    document.selection.removeAllRanges();
   }
 
   onBeforeInput(event) {
