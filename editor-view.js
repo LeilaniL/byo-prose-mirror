@@ -35,7 +35,7 @@ function renderSpec(spec) {
   return { dom, contentDOM };
 }
 
-function toDOM(node) {
+function renderNode(node) {
   if (node.isText) {
     return renderSpec(node.text);
   }
@@ -182,7 +182,7 @@ class NodeView extends View {
         childNodeView.destroy();
       }
 
-      const { dom, contentDOM } = toDOM(child);
+      const { dom, contentDOM } = renderNode(child);
 
       if (childNodeView) {
         this.contentDOM.replaceChild(dom, childNodeView.dom);
