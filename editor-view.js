@@ -44,7 +44,7 @@ class View {
       const start = offset + border;
       const end = offset + size - border;
 
-      if (end < from || (end === from && isLastChild)) {
+      if (end > from || (end === from && isLastChild)) {
         child.setSelection(anchor - start, head - start);
         break;
       }
@@ -78,7 +78,7 @@ class View {
     const { parent } = this;
 
     if (!parent) {
-      return 0;
+      return -1;
     }
 
     const siblings = parent.children;
@@ -272,7 +272,10 @@ class EditorView extends NodeView {
       anchorNode.__view.pos + anchorOffset,
       focusNode.__view.pos + focusOffset
     );
-    tr.setSelection(selection);
-    this.dispatch(tr);
+
+    if (!selection.eq(this.state.selection)) {
+      tr.setSelection(selection);
+      this.dispatch(tr);
+    }
   }
 }
