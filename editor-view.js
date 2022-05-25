@@ -1,47 +1,15 @@
-const { splitBlock } = require("prosemirror-commands");
 const { TextSelection } = require("prosemirror-state");
-
-function renderSpec(spec) {
-  if (typeof spec === "string") {
-    const dom = document.createTextNode(spec);
-    return { dom };
-  }
-
-  const [tagName, ...rest] = spec;
-  const [attrs, children] =
-    typeof rest[0] === "object" && !Array.isArray(rest[0])
-      ? [rest[0], rest.slice(1)]
-      : [{}, rest];
-
-  const dom = document.createElement(tagName);
-
-  for (const [name, value] of Object.entries(attrs)) {
-    dom.setAttribute(name, value);
-  }
-
-  let contentDOM;
-  for (const child of children) {
-    if (child === 0) {
-      contentDOM = dom;
-    } else {
-      const renderedChild = renderSpec(child);
-      dom.appendChild(renderedChild.dom);
-      if (renderedChild.contentDOM) {
-        contentDOM = renderedChild.contentDOM;
-      }
-    }
-  }
-
-  return { dom, contentDOM };
-}
 
 function renderNode(node) {
   if (node.isText) {
-    return renderSpec(node.text);
+    const dom = document.createTextNode(node.text);
+    return { dom };
   }
 
   const outputSpec = node.type.spec.toDOM(node);
-  return renderSpec(outputSpec);
+  const dom = document.createElement(outputSpec[0]);
+  const contentDOM = outputSpec[1] === 0 ? dom : undefined;
+  return { dom, contentDOM };
 }
 
 class View {
@@ -257,12 +225,6 @@ class EditorView extends NodeView {
         const { tr } = this.state;
         tr.insertText(event.data);
         this.dispatch(tr);
-        break;
-      }
-
-      case "insertParagraph": {
-        const { state, dispatch } = this;
-        splitBlock(state, dispatch);
         break;
       }
 
