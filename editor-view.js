@@ -1,12 +1,19 @@
-const { chainCommands, splitBlock } = require("prosemirror-commands");
+const { splitBlock } = require("prosemirror-commands");
 const { DOMSerializer } = require("prosemirror-model");
-const { splitListItem } = require("prosemirror-schema-list");
 const { TextSelection } = require("prosemirror-state");
 
 function toDOM(node) {
-  const schema = node.type.schema;
-  const serializer = DOMSerializer.fromSchema(schema);
-  const outputSpec = serializer.nodes[node.type.name](node);
+  if (node.isText) {
+    const dom = document.createTextNode(node.text);
+    return { dom };
+  }
+
+  const outputSpec = node.type.spec.toDOM(node);
+  const [tagName, ...rest] = outputSpec;
+
+  const [attrs, ...children] =
+    typeof rest[0] === "object" ? rest : [{}, ...rest];
+
   return DOMSerializer.renderSpec(document, outputSpec);
 }
 
@@ -228,11 +235,7 @@ class EditorView extends NodeView {
 
       case "insertParagraph": {
         const { state, dispatch } = this;
-        const command = chainCommands(
-          splitListItem(state.schema.nodes.list_item),
-          splitBlock
-        );
-        command(state, dispatch);
+        splitBlock(state, dispatch);
         break;
       }
 
