@@ -222,6 +222,19 @@ class EditorView extends NodeView {
         const { tr } = this.state;
         tr.insertText(event.data);
         this.dispatch(tr);
+        break;
+      }
+
+      case "deleteContentBackward": {
+        const { selection, tr } = this.state;
+        const { $cursor } = selection;
+        const { parentOffset } = $cursor;
+        if (parentOffset) {
+          const { pos } = $cursor;
+          tr.delete(pos - 1, pos);
+          this.dispatch(tr);
+        }
+        break;
       }
     }
   }
