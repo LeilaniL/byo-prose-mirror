@@ -107,6 +107,11 @@ class TextView extends View {
   pointFromPos(pos, side) {
     return { node: this.dom, offset: pos };
   }
+  
+  posFromPoint(node, offset) {
+    const view = node.__view;
+    return view.pos + view.border + offset;
+  }
 
   get size() {
     return this.node.text.length;
@@ -232,7 +237,9 @@ class EditorView extends NodeView {
       }
 
       case "deleteContentBackward": {
-        const { selection, tr } = this.state;
+        const { tr } = this.state;
+        const range = event.getTargetRanges()[0];
+        const from = 
         if (selection instanceof TextSelection) {
           const { $cursor } = selection;
           const { parentOffset } = $cursor;
@@ -253,13 +260,11 @@ class EditorView extends NodeView {
     const domSelection = document.getSelection();
 
     const { anchorNode, anchorOffset } = domSelection;
-    const anchorView = anchorNode.__view;
-    const anchor = anchorView.pos + anchorView.border + anchorOffset;
+    const anchor = this.posFromPoint(anchorNode, anchorOffset);
     const $anchor = doc.resolve(anchor);
 
     const { focusNode, focusOffset } = domSelection;
-    const focusView = focusNode.__view;
-    const head = focusView.pos + focusView.border + focusOffset;
+    const head = this.posFromPoint(focusNode, focusOffset);
     const $head = doc.resolve(head);
 
     const selection = TextSelection.between($anchor, $head);
