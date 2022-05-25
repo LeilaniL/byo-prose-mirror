@@ -1,4 +1,4 @@
-const { DOMSerializer } = require('prosemirror-model');
+const { DOMSerializer } = require("prosemirror-model");
 
 class NodeView {
   constructor(node, dom, contentDOM) {
@@ -7,16 +7,28 @@ class NodeView {
     this.contentDOM = contentDOM;
     this.parent = null;
     this.children = [];
+    this.dom.__nodeView = this;
   }
   
-  get pos() {
-    if (this.parent) {
-      
+  update(node) {
+    if (node !== this.node) {
+      const result
     }
-    
+  }
+
+  get pos() {
+    if (!this.parent) {
+      return 0;
+    }
+
+    const index = this.parent.children.indexOf(this);
+    const precedingSiblings = this.parent.children.slice(0, index);
+    return precedingSiblings.reduce(
+      (pos, child) => pos + child.nodeSize,
+      this.parent.pos
+    );
   }
 }
-
 
 class EditorView {
   constructor(dom, { state }) {
@@ -27,6 +39,8 @@ class EditorView {
 
     this.dom.addEventListener("beforeinput", this.onBeforeInput);
     this.dom.contentEditable = true;
+
+    this.nodeView = new NodeView(this.state.doc, this.dom, this.dom);
   }
 
   destroy() {
@@ -35,18 +49,16 @@ class EditorView {
 
   dispatch(tr) {
     const newState = this.state.apply(tr);
-    this.updateState(newState);
+    this.setState(newState);
   }
 
-  render() {
-    const serializer = DOMSerializer.fromSchema(this.state.schema);
-    const result = serializer.serializeFragment(this.state.doc.content);
-    this.dom.replaceChildren(...result.childNodes);
-  }
-
-  updateState(newState) {
+  setState(newState) {
     this.state = newState;
-    this.render();
+    this.update();
+  }
+
+  update() {
+    this.nodeView.update(this.state.doc);
   }
 
   onBeforeInput(event) {
