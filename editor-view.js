@@ -1,5 +1,4 @@
 const { splitBlock } = require("prosemirror-commands");
-const { DOMSerializer } = require("prosemirror-model");
 const { TextSelection } = require("prosemirror-state");
 
 function renderSpec(spec) {
@@ -8,15 +7,19 @@ function renderSpec(spec) {
     return { dom };
   }
 
-  const [tagName, first, ...rest] = spec;
-  const [attrs, ...children] =
-    typeof first === "object" && !Array.isArray(first)
-      ? [first, rest]
+  const [tagName, ...rest] = spec;
+  const [attrs, children] =
+    typeof rest[0] === "object" && !Array.isArray(rest[0])
+      ? [rest[0], rest.slice(1)]
       : [{}, rest];
 
   const dom = document.createElement(tagName);
-  let contentDOM;
 
+  for (const [name, value] of Object.entries(attrs)) {
+    dom.setAttribute(name, value);
+  }
+
+  let contentDOM;
   for (const child of children) {
     if (child === 0) {
       contentDOM = dom;
