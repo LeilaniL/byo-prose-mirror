@@ -41,8 +41,9 @@ class View {
       const { border, size } = child;
       const start = offset + border;
       const end = offset + size - border;
+      const after = end + border;
 
-      if (pos < end || (pos === end && (preferBefore || isLastChild))) {
+      if (pos < after || (pos === after && preferBefore) || isLastChild) {
         return child.pointFromPos(pos - start, preferBefore);
       }
 
