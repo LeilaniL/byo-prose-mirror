@@ -31,23 +31,25 @@ class View {
   setSelection(anchor, head) {
     const from = Math.min(anchor, head);
     const to = Math.max(anchor, head);
-    if (anchor)
     
-  }
-
-  get pos() {
-    if (!this.parent) {
-      return -1;
+    let offset = 0;
+    let index = 0;
+    
+    while (offset)
+    
+    for (const child of this.children) {
+      if (from < offset + child.size) {
+        child.setSelection(anchor - offset, head - offset);
+      }
     }
-
-    const index = this.parent.children.indexOf(this);
-    console.log("index", index);
-    const precedingSiblings = this.parent.children.slice(0, index);
-    console.log(precedingSiblings);
-    return precedingSiblings.reduce(
-      (pos, sibling) => pos + sibling.nodeSize,
-      this.parent.pos + 1
-    );
+    
+      
+      child.setSelection()
+    }
+  }
+  
+  get size() {
+    return this.children.reduce((size, child) => size + child.size, 0);
   }
 }
 
@@ -59,6 +61,10 @@ class TextView extends View {
 
   update(node) {
     return node === this.node;
+  }
+  
+  get size() {
+    return this.node.text.length;
   }
 }
 
@@ -110,6 +116,10 @@ class NodeView extends View {
       this.children.pop().destroy();
       this.contentDOM.remove(this.contentDOM.lastChild);
     }
+  }
+  
+  get size() {
+    return this.node.nodeSize;
   }
 }
 
