@@ -1,5 +1,12 @@
 const { DOMSerializer } = require("prosemirror-model");
 
+function toDOM(node) {
+  const schema = node.type.schema;
+  const serializer = DOMSerializer.fromSchema(schema);
+  const outputSpec = serializer.nodes[node.type.name](node);
+  return DOMSerializer.renderSpec(document, outputSpec);
+}
+
 class NodeView {
   constructor(node, dom, contentDOM) {
     this.node = node;
@@ -10,32 +17,28 @@ class NodeView {
     this.dom.__nodeView = this;
   }
 
-  destory() {
-    this.dom.__nodeView = null;
-    this.parent.dom.removeChild(this.dom);
-  }
-
   update(node) {
-    const schema = node.type.schema;
-    const serializer = DOMSerializer.fromSchema(schema);
-    
-    if (node !== this.node) {
-      const { dom, contentDOM } = this.
-      
-      
+    if (node.type !== this.node.type) {
+      return false;
     }
     
-    this.node = node;
-    
-    console.log("update", this.node.type.name);
+    if (node !== this.node) {
+      const parentDOM = this.dom.parentDOM;
+      const { dom, contentDOM } = toDOM(node);
+
+      parentDOM.replaceChild(dom, this.dom);
+
+      this.node = node;
+      this.dom = dom;
+      this.contentDOM = contentDOM;
+      this.children = [];
+    }
 
     this.node.forEach((child, offset, index) => {
-      console.log("child", child.type.name);
       let childNodeView = this.children[index];
 
-      if (!childNodeView || childNodeView.node !== child) {
-        const spec = serializer.nodes[child.type.name](child);
-        const { dom, contentDOM } = DOMSerializer.renderSpec(document, spec);
+      if (!childNodeView) {
+        const { dom, contentDOM } = toDOM(child);
         childNodeView = new NodeView(child, dom, contentDOM);
         childNodeView.parent = this;
         this.children[index] = childNodeView;
@@ -44,9 +47,11 @@ class NodeView {
       childNodeView.update(child);
     });
 
-    this.children
-      .slice(this.node.childCount)
-      .forEach((childNodeView) => childNodeView.destroy());
+    if (this.contentDOM) {
+      while (this.contentDOM.childNodes.length > this.children.length) {
+        this.contentDOM.removeChild(this.contentDOM.lastChild);
+      }
+    }
   }
 
   get pos() {
