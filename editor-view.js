@@ -30,7 +30,7 @@ class View {
     return false;
   }
 
-  domFromPos(pos, side) {
+  pointFromPos(pos, preferBefore) {
     let index = 0;
     let offset = 0;
 
@@ -42,8 +42,8 @@ class View {
       const start = offset + border;
       const end = offset + size - border;
 
-      if (pos < end || (pos === end && (side === -1 || isLastChild))) {
-        return child.domFromPos(pos - start, side);
+      if (pos < end || (pos === end && (preferBefore || isLastChild))) {
+        return child.pointFromPos(pos - start, preferBefore);
       }
 
       index = index + 1;
@@ -54,25 +54,17 @@ class View {
   }
 
   setSelection(anchor, head) {
-    const from = Math.min(anchor, head);
-    const to = Math.max(anchor, head);
+    const backward = head > anchor;
 
-    const { node: anchorNode, offset: anchorOffset } = this.domFromPos(
-      anchor,
-      anchor < head ? 1 : -1
-    );
-
-    const { node: focusNode, offset: focusOffset } = this.domFromPos(
-      head,
-      anchor < head ? -1 : 1
-    );
+    const anchorPoint = this.pointFromPos(anchor, backward);
+    const focusPoint = this.pointFromPos(head, !backward);
 
     const domSelection = document.getSelection();
     domSelection.setBaseAndExtent(
-      anchorNode,
-      anchorOffset,
-      focusNode,
-      focusOffset
+      anchorPoint.node,
+      anchorPoint.offset,
+      focusPoint.node,
+      focusPoint.offset
     );
   }
 
@@ -166,7 +158,7 @@ class NodeView extends View {
 
     while (this.children.length > this.node.childCount) {
       this.children.pop().destroy();
-      this.contentDOM.remove(this.contentDOM.lastChild);
+      this.contentDOM.removeChild(this.contentDOM.lastChild);
     }
   }
 
