@@ -27,8 +27,6 @@ class View {
   update(node) {
     return false;
   }
-  
-  domFromPos()
 
   setSelection(anchor, head) {
     const from = Math.min(anchor, head);
@@ -40,29 +38,34 @@ class View {
     while (index < this.children.length) {
       const child = this.children[index];
       const isLastChild = index === this.children.length - 1;
-      const nextOffset = offset + child.size;
 
-      if (nextOffset > from || (nextOffset === from && isLastChild)) {
-        child.setSelection(anchor - offset, head - offset);
+      const { border, size } = child;
+      const start = offset + border;
+      const end = offset + size - border;
+
+      if (end < from || (end === from && isLastChild)) {
+        child.setSelection(anchor - start, head - start);
         break;
       }
 
       index = index + 1;
-      offset = nextOffset;
+      offset = offset + size;
     }
 
     while (index < this.children.length) {
       const child = this.children[index];
-      const isLastChild = index === this.children.length - 1;
-      const nextOffset = offset + child.size;
 
-      if (nextOffset > to || (nextOffset === to && isLastChild)) {
-        child.setSelection(anchor - offset, head - offset);
+      const { border, size } = child;
+      const start = offset + border;
+      const end = offset + size - border;
+
+      if (end >= to) {
+        child.setSelection(anchor - start, head - start);
         break;
       }
 
       index = index + 1;
-      offset = nextOffset;
+      offset = offset + size;
     }
   }
 
@@ -109,6 +112,10 @@ class TextView extends View {
       focusNode,
       focusOffset
     );
+  }
+
+  get border() {
+    return 0;
   }
 
   get size() {
@@ -166,6 +173,10 @@ class NodeView extends View {
     }
   }
 
+  get border() {
+    return this.node.isLeaf ? 0 : 1;
+  }
+
   get size() {
     return this.node.nodeSize;
   }
@@ -198,7 +209,7 @@ class EditorView extends NodeView {
 
   update(node) {
     super.update(node);
-    
+
     const { anchor, head } = this.state.selection;
     this.setSelection(anchor, head);
   }
