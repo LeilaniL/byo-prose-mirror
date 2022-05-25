@@ -29,20 +29,11 @@ class View {
   update(node) {
     return false;
   }
-
-  setSelection(anchor, head) {
-    const from = Math.min(anchor, head);
-    const to = Math.max(anchor, head);
-
+  
+  domFromPos(pos, side) {
     let index = 0;
     let offset = 0;
-
-    if (!this.children.length) {
-      const selection = document.getSelection();
-      selection.setBaseAndExtent(this.dom, 0, this.dom, 0);
-      return;
-    }
-
+    
     while (index < this.children.length) {
       const child = this.children[index];
       const isLastChild = index === this.children.length - 1;
@@ -51,30 +42,23 @@ class View {
       const start = offset + border;
       const end = offset + size - border;
 
-      if (end > from || (end === from && isLastChild)) {
-        child.setSelection(anchor - start, head - start);
-        break;
+      if (pos < end || (pos === end && side === 1)) {
+        return child.domFromPos(pos - start);
       }
 
       index = index + 1;
       offset = offset + size;
     }
+    
+    return { node: this.dom, offset: pos };
+    
+  }
 
-    while (index < this.children.length) {
-      const child = this.children[index];
-
-      const { border, size } = child;
-      const start = offset + border;
-      const end = offset + size - border;
-
-      if (end >= to) {
-        child.setSelection(anchor - start, head - start);
-        break;
-      }
-
-      index = index + 1;
-      offset = offset + size;
-    }
+  setSelection(anchor, head) {
+    const from = Math.min(anchor, head);
+    const to = Math.max(anchor, head);
+    
+    const { node: anchorNode, offset: anchorOffset } = this.domFromPos(anchor)
   }
 
   get border() {
@@ -110,6 +94,10 @@ class TextView extends View {
 
   update(node) {
     return node === this.node;
+  }
+  
+  domFromPos(pos, side) {
+    return { node: this.dom, offset: pos };
   }
 
   setSelection(anchor, head) {
