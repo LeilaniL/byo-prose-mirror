@@ -22,12 +22,20 @@ class View {
       child.destroy();
     }
   }
+  
+  update(node) {
+    return false;
+  }
 }
 
 class TextView extends View {
-  constructor(parent, node) {
-    
-    
+  constructor(parent, node, dom) {
+    super(parent, [], dom);
+    this.node = node;
+  }
+  
+  update(node) {
+    return node === this.node;
   }
 }
 
@@ -50,7 +58,6 @@ class NodeView extends View {
   }
 
   updateChildren() {
-    console.log("children", this.node.type.name);
     this.node.forEach((child, offset, index) => {
       let childNodeView = this.children[index];
 
@@ -71,7 +78,11 @@ class NodeView extends View {
         this.contentDOM.appendChild(dom);
       }
 
-      this.children[index] = new NodeView(this, child, dom, contentDOM);
+      if (child.isText) {
+        this.children[index] = new TextView(this, child, dom);
+      } else {
+        this.children[index] = new NodeView(this, child, dom, contentDOM);
+      }
     });
 
     while (this.children.length > this.node.childCount) {
