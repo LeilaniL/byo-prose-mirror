@@ -42,8 +42,8 @@ class View {
       const start = offset + border;
       const end = offset + size - border;
 
-      if (pos < end || (pos === end && side === 1)) {
-        return child.domFromPos(pos - start);
+      if (pos < end || (pos === end && (side === -1 || isLastChild))) {
+        return child.domFromPos(pos - start, side);
       }
 
       index = index + 1;
