@@ -14,6 +14,16 @@ class View {
     this.dom = dom;
     this.contentDOM = contentDOM;
   }
+  
+  destroy() {
+    for (const child of this.children) {
+      child.destroy();
+    }
+    
+    if (this.parent) {
+      this.parent.dom.removeChild(this.dom);
+    }
+  }
 }
 
 class NodeView extends View {
@@ -22,39 +32,39 @@ class NodeView extends View {
     this.node = node;
     this.updateChildren();
   }
-  
+
   update(node) {
-    if (this.node !== node) {
-      const parentDOM = this.parent.node.dom;
-      const { dom, contentDOM } = toDOM(node);
-      parentDOM.replaceChild(dom, this.dom);
-      
-      this.dom
-      this.node = node;
-      
+    console.log('update', node.type.name)
+    if (!this.node.sameMarkup(node)) {
+      return false;
     }
-    
+
+    this.node = node;
     this.updateChildren();
+    return true;
   }
 
   updateChildren() {
     this.node.forEach((child, offset, index) => {
       let childNodeView = this.children[index];
 
-      if (!childNodeView) {
-        const { dom, contentDOM } = toDOM(child);
-        childNodeView = new NodeView(child, dom, contentDOM);
-        childNodeView.parent = this;
-        this.children[index] = childNodeView;
+      if (childNodeView) {
+        if (childNodeView.update(child)) {
+          return;
+        }
+
+        console.log('destroy', childNodeView.node.type.name)
+        childNodeView.destroy();
       }
 
-      childNodeView.update(child);
+      const { dom, contentDOM } = toDOM(child);
+      childNodeView = new NodeView(this, child, dom, contentDOM);
+      childNodeView.parent = this;
+      this.children[index] = childNodeView;
     });
-
-    if (this.contentDOM) {
-      while (this.contentDOM.childNodes.length > this.children.length) {
-        this.contentDOM.removeChild(this.contentDOM.lastChild);
-      }
+    
+    while(this.children.length > this.node.childCount) {
+      this.children.shift().destroy();
     }
   }
 
@@ -82,7 +92,7 @@ class EditorView {
     this.dom.addEventListener("beforeinput", this.onBeforeInput);
     this.dom.contentEditable = true;
 
-    this.nodeView = new NodeView(this.state.doc, this.dom, this.dom);
+    this.nodeView = new NodeView(null, this.state.doc, this.dom, this.dom);
     this.update();
   }
 
