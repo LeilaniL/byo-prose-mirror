@@ -1,5 +1,6 @@
 const { DOMSerializer } = require("prosemirror-model");
 const { TextSelection } = require("prosemirror-state");
+const { joinBackward } = require("prosemirror-commands");
 
 function toDOM(node) {
   const schema = node.type.schema;
@@ -204,6 +205,7 @@ class EditorView extends NodeView {
     super(null, state.doc, dom, dom);
     this.state = state;
 
+    this.dispatch = this.dispatch.bind(this);
     this.onBeforeInput = this.onBeforeInput.bind(this);
     this.onSelectionChange = this.onSelectionChange.bind(this);
 
@@ -245,8 +247,15 @@ class EditorView extends NodeView {
         this.dispatch(tr);
         break;
       }
-
+        
       case "deleteContentBackward": {
+        const { tr } = this.state;
+        tr.deleteSelection();
+        this.dispatch(tr);
+        break;
+      }
+
+      case "": {
         const { selection, tr } = this.state;
         if (selection instanceof TextSelection) {
           const { $cursor } = selection;
