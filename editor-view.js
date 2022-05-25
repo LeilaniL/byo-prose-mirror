@@ -14,15 +14,20 @@ class View {
     this.dom = dom;
     this.contentDOM = contentDOM;
   }
-  
+
   destroy() {
+    this.parent = null;
+
     for (const child of this.children) {
       child.destroy();
     }
+  }
+}
+
+class TextView extends View {
+  constructor(parent, node) {
     
-    if (this.parent) {
-      this.parent.dom.removeChild(this.dom);
-    }
+    
   }
 }
 
@@ -34,8 +39,8 @@ class NodeView extends View {
   }
 
   update(node) {
-    console.log('update', node.type.name)
     if (!this.node.sameMarkup(node)) {
+      console.log("cannot update", node.type.name);
       return false;
     }
 
@@ -45,6 +50,7 @@ class NodeView extends View {
   }
 
   updateChildren() {
+    console.log("children", this.node.type.name);
     this.node.forEach((child, offset, index) => {
       let childNodeView = this.children[index];
 
@@ -53,18 +59,24 @@ class NodeView extends View {
           return;
         }
 
-        console.log('destroy', childNodeView.node.type.name)
+        console.log("destroy", childNodeView.node.type.name);
         childNodeView.destroy();
       }
 
       const { dom, contentDOM } = toDOM(child);
-      childNodeView = new NodeView(this, child, dom, contentDOM);
-      childNodeView.parent = this;
-      this.children[index] = childNodeView;
+
+      if (childNodeView) {
+        this.contentDOM.replaceChild(dom, childNodeView.dom);
+      } else {
+        this.contentDOM.appendChild(dom);
+      }
+
+      this.children[index] = new NodeView(this, child, dom, contentDOM);
     });
-    
-    while(this.children.length > this.node.childCount) {
-      this.children.shift().destroy();
+
+    while (this.children.length > this.node.childCount) {
+      this.children.pop().destroy();
+      this.contentDOM.remove(this.contentDOM.lastChild);
     }
   }
 
@@ -82,18 +94,15 @@ class NodeView extends View {
   }
 }
 
-class EditorView {
+class EditorView extends NodeView {
   constructor(dom, { state }) {
-    this.dom = dom;
+    super(null, state.doc, dom, dom);
     this.state = state;
 
     this.onBeforeInput = this.onBeforeInput.bind(this);
 
     this.dom.addEventListener("beforeinput", this.onBeforeInput);
     this.dom.contentEditable = true;
-
-    this.nodeView = new NodeView(null, this.state.doc, this.dom, this.dom);
-    this.update();
   }
 
   destroy() {
@@ -107,12 +116,7 @@ class EditorView {
 
   setState(newState) {
     this.state = newState;
-    this.update();
-  }
-
-  update() {
-    console.log(JSON.stringify(this.state.doc));
-    this.nodeView.update(this.state.doc);
+    this.update(this.state.doc);
   }
 
   onBeforeInput(event) {
