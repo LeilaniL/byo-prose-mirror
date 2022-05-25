@@ -2,19 +2,43 @@ const { splitBlock } = require("prosemirror-commands");
 const { DOMSerializer } = require("prosemirror-model");
 const { TextSelection } = require("prosemirror-state");
 
-function toDOM(node) {
-  if (node.isText) {
-    const dom = document.createTextNode(node.text);
+function renderSpec(spec) {
+  if (typeof spec === "string") {
+    const dom = document.createTextNode(spec);
     return { dom };
   }
 
-  const outputSpec = node.type.spec.toDOM(node);
-  const [tagName, ...rest] = outputSpec;
-
+  const [tagName, first, ...rest] = spec;
   const [attrs, ...children] =
-    typeof rest[0] === "object" ? rest : [{}, ...rest];
+    typeof first === "object" && !Array.isArray(first)
+      ? [first, rest]
+      : [{}, rest];
 
-  return DOMSerializer.renderSpec(document, outputSpec);
+  const dom = document.createElement(tagName);
+  let contentDOM;
+
+  for (const child of children) {
+    if (child === 0) {
+      contentDOM = dom;
+    } else {
+      const renderedChild = renderSpec(child);
+      dom.appendChild(renderedChild.dom);
+      if (renderedChild.contentDOM) {
+        contentDOM = renderedChild.contentDOM;
+      }
+    }
+  }
+
+  return { dom, contentDOM };
+}
+
+function toDOM(node) {
+  if (node.isText) {
+    return renderSpec(node.text);
+  }
+
+  const outputSpec = node.type.spec.toDOM(node);
+  return renderSpec(outputSpec);
 }
 
 class View {
