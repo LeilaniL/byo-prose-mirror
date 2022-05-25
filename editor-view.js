@@ -9,11 +9,23 @@ class NodeView {
     this.children = [];
     this.dom.__nodeView = this;
   }
-  
+
   update(node) {
-    if (node !== this.node) {
-      const result
-    }
+    const schema = node.type.schema;
+    const serializer = DOMSerializer.fromSchema(schema);
+
+    this.node.forEach((child, offset, index) => {
+      let childNodeView = this.children[index];
+      
+      if (!childNodeView || childNodeView.node !== child) {
+        
+        childNodeView = new NodeView(child, dom, contentDOM);
+        childNodeView.parent = this;
+        this.children[index] = childNodeView;
+      }
+      
+      childNodeView.update(child);
+    });
   }
 
   get pos() {
@@ -41,6 +53,7 @@ class EditorView {
     this.dom.contentEditable = true;
 
     this.nodeView = new NodeView(this.state.doc, this.dom, this.dom);
+    this.update();
   }
 
   destroy() {
