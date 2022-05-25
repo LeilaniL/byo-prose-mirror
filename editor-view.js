@@ -248,7 +248,7 @@ class EditorView extends NodeView {
 
   onSelectionChange(event) {
     const { doc, tr } = this.state;
-    
+
     const domSelection = document.getSelection();
 
     const { anchorNode, anchorOffset } = domSelection;
@@ -262,21 +262,12 @@ class EditorView extends NodeView {
     const $head = doc.resolve(head);
 
     const reversed = head < anchor;
-    const [$from, $to] = reversed ? [$head, $anchor]
-    const resolved
-    const [$from, $to] = anchor <= head ?
-          [doc.resolve(anchor), doc.resolve(head)]
-    : [doc.resolve(head), doc.resolve(anchor)];
-    
-      const selection = TextSelection.between($from, $to);
-      tr.setSelection(selection);
-    } else {
-      const $from = doc.resolve(head);
-      const $to = doc.resolve(anchor);
-      const selection = TextSelection.between($from, $to, true);
-      tr.setSelection(selection);
-    }
+    const [$from, $to] = reversed ? [$head, $anchor] : [$anchor, $head];
+    const selection = TextSelection.between($from, $to, reversed);
 
-    this.dispatch(tr);
+    if (!this.state.selection.eq(selection)) {
+      tr.setSelection(selection);
+      this.dispatch(tr);
+    }
   }
 }
