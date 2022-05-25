@@ -36,6 +36,10 @@ class View {
 
     let index = 0;
     let offset = 0;
+    
+    if (!this.children.length) {
+      if (anchor)
+    }
 
     while (index < this.children.length) {
       const child = this.children[index];
