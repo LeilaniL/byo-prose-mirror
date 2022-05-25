@@ -78,7 +78,7 @@ class View {
     const { parent } = this;
 
     if (!parent) {
-      return -1;
+      return 0;
     }
 
     const siblings = parent.children;
@@ -86,7 +86,7 @@ class View {
     const precedingSiblings = siblings.slice(0, index);
     return precedingSiblings.reduce(
       (pos, sibling) => pos + sibling.size,
-      parent.pos
+      parent.pos + parent.border
     );
   }
 
@@ -208,14 +208,14 @@ class EditorView extends NodeView {
     this.onSelectionChange = this.onSelectionChange.bind(this);
 
     this.dom.addEventListener("beforeinput", this.onBeforeInput);
-    this.dom.addEventListener("selectionchange", this.onSelectionChange);
+    document.addEventListener("selectionchange", this.onSelectionChange);
 
     this.dom.contentEditable = true;
   }
 
   destroy() {
     this.dom.removeEventListener("beforeinput", this.onBeforeInput);
-    this.dom.removeEventListener("selectionchange", this.onSelectionChange);
+    document.addEventListener("selectionchange", this.onSelectionChange);
   }
 
   dispatch(tr) {
@@ -263,14 +263,16 @@ class EditorView extends NodeView {
   }
 
   onSelectionChange(event) {
-    const selection = document.getSelection();
-    const { anchorNode, anchorOffset, focusNode, focusOffset } = selection;
-    
-    let node = anchorNode;
-    let anchorView = node.__view;
-    while (!anchorView) {
-      anc
-      if (anchorNode.
-    }
+    const domSelection = document.getSelection();
+    const { anchorNode, anchorOffset, focusNode, focusOffset } = domSelection;
+
+    const { doc, tr } = this.state;
+    const selection = TextSelection.create(
+      doc,
+      anchorNode.__view.pos + anchorOffset,
+      focusNode.__view.pos + focusOffset
+    );
+    tr.setSelection(selection);
+    this.dispatch(tr);
   }
 }
