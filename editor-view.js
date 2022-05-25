@@ -262,10 +262,7 @@ class EditorView extends NodeView {
     const head = focusView.pos + focusView.border + focusOffset;
     const $head = doc.resolve(head);
 
-    const reversed = head < anchor;
-    const [$from, $to] = reversed ? [$head, $anchor] : [$anchor, $head];
-    const selection = TextSelection.between($from, $to, reversed);
-
+    const selection = TextSelection.between($anchor, $head);
     if (!this.state.selection.eq(selection)) {
       tr.setSelection(selection);
       this.dispatch(tr);
