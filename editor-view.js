@@ -54,6 +54,11 @@ class View {
     return { node: this.dom, offset: pos };
   }
 
+  posFromPoint(node, offset) {
+    const view = node.__view;
+    return view.pos + view.border + offset;
+  }
+
   setSelection(anchor, head) {
     const backward = head > anchor;
 
@@ -106,11 +111,6 @@ class TextView extends View {
 
   pointFromPos(pos, side) {
     return { node: this.dom, offset: pos };
-  }
-  
-  posFromPoint(node, offset) {
-    const view = node.__view;
-    return view.pos + view.border + offset;
   }
 
   get size() {
@@ -208,15 +208,10 @@ class EditorView extends NodeView {
   }
 
   update(node) {
-    try {
-      document.removeEventListener("selectionchange", this.onSelectionChange);
-      super.update(node);
+    super.update(node);
 
-      const { anchor, head } = this.state.selection;
-      this.setSelection(anchor, head);
-    } finally {
-      document.addEventListener("selectionchange", this.onSelectionChange);
-    }
+    const { anchor, head } = this.state.selection;
+    this.setSelection(anchor, head);
   }
 
   onBeforeInput(event) {
@@ -239,16 +234,10 @@ class EditorView extends NodeView {
       case "deleteContentBackward": {
         const { tr } = this.state;
         const range = event.getTargetRanges()[0];
-        const from = 
-        if (selection instanceof TextSelection) {
-          const { $cursor } = selection;
-          const { parentOffset } = $cursor;
-          if (parentOffset) {
-            const { pos } = $cursor;
-            tr.delete(pos - 1, pos);
-            this.dispatch(tr);
-          }
-        }
+        const from = this.posFromPoint(range.startContainer, range.startOffset);
+        const to = this.posFromPoint(range.endContainer, range.endOffset);
+        tr.delete(from, to);
+        this.dispatch(tr);
         break;
       }
     }
