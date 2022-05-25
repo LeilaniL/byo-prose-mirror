@@ -10,22 +10,43 @@ class NodeView {
     this.dom.__nodeView = this;
   }
 
+  destory() {
+    this.dom.__nodeView = null;
+    this.parent.dom.removeChild(this.dom);
+  }
+
   update(node) {
     const schema = node.type.schema;
     const serializer = DOMSerializer.fromSchema(schema);
+    
+    if (node !== this.node) {
+      const { dom, contentDOM } = this.
+      
+      
+    }
+    
+    this.node = node;
+    
+    console.log("update", this.node.type.name);
 
     this.node.forEach((child, offset, index) => {
+      console.log("child", child.type.name);
       let childNodeView = this.children[index];
-      
+
       if (!childNodeView || childNodeView.node !== child) {
-        
+        const spec = serializer.nodes[child.type.name](child);
+        const { dom, contentDOM } = DOMSerializer.renderSpec(document, spec);
         childNodeView = new NodeView(child, dom, contentDOM);
         childNodeView.parent = this;
         this.children[index] = childNodeView;
       }
-      
+
       childNodeView.update(child);
     });
+
+    this.children
+      .slice(this.node.childCount)
+      .forEach((childNodeView) => childNodeView.destroy());
   }
 
   get pos() {
@@ -71,6 +92,7 @@ class EditorView {
   }
 
   update() {
+    console.log(JSON.stringify(this.state.doc));
     this.nodeView.update(this.state.doc);
   }
 
