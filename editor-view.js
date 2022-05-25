@@ -1,4 +1,5 @@
 const { DOMSerializer } = require("prosemirror-model");
+const { TextSelection } = require("prosemirror-state");
 
 function toDOM(node) {
   const schema = node.type.schema;
@@ -69,6 +70,26 @@ class View {
     }
   }
 
+  get border() {
+    return 0;
+  }
+
+  get pos() {
+    const { parent } = this;
+
+    if (!parent) {
+      return -1;
+    }
+
+    const siblings = parent.children;
+    const index = siblings.indexOf(this);
+    const precedingSiblings = siblings.slice(0, index);
+    return precedingSiblings.reduce(
+      (pos, sibling) => pos + sibling.size,
+      parent.pos
+    );
+  }
+
   get size() {
     return this.children.reduce((size, child) => size + child.size, 0);
   }
@@ -112,10 +133,6 @@ class TextView extends View {
       focusNode,
       focusOffset
     );
-  }
-
-  get border() {
-    return 0;
   }
 
   get size() {
@@ -188,13 +205,17 @@ class EditorView extends NodeView {
     this.state = state;
 
     this.onBeforeInput = this.onBeforeInput.bind(this);
+    this.onSelectionChange = this.onSelectionChange.bind(this);
 
     this.dom.addEventListener("beforeinput", this.onBeforeInput);
+    this.dom.addEventListener("selectionchange", this.onSelectionChange);
+
     this.dom.contentEditable = true;
   }
 
   destroy() {
     this.dom.removeEventListener("beforeinput", this.onBeforeInput);
+    this.dom.removeEventListener("selectionchange", this.onSelectionChange);
   }
 
   dispatch(tr) {
@@ -227,15 +248,29 @@ class EditorView extends NodeView {
 
       case "deleteContentBackward": {
         const { selection, tr } = this.state;
-        const { $cursor } = selection;
-        const { parentOffset } = $cursor;
-        if (parentOffset) {
-          const { pos } = $cursor;
-          tr.delete(pos - 1, pos);
-          this.dispatch(tr);
+        if (selection instanceof TextSelection) {
+          const { $cursor } = selection;
+          const { parentOffset } = $cursor;
+          if (parentOffset) {
+            const { pos } = $cursor;
+            tr.delete(pos - 1, pos);
+            this.dispatch(tr);
+          }
         }
         break;
       }
+    }
+  }
+
+  onSelectionChange(event) {
+    const selection = document.getSelection();
+    const { anchorNode, anchorOffset, focusNode, focusOffset } = selection;
+    
+    let node = anchorNode;
+    let anchorView = node.__view;
+    while (!anchorView) {
+      anc
+      if (anchorNode.
     }
   }
 }
