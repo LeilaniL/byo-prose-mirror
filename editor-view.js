@@ -1,5 +1,6 @@
-const { splitBlock } = require("prosemirror-commands");
+const { chainCommands, splitBlock } = require("prosemirror-commands");
 const { DOMSerializer } = require("prosemirror-model");
+const { splitListItem } = require("prosemirror-schema-list");
 const { TextSelection } = require("prosemirror-state");
 
 function toDOM(node) {
@@ -227,7 +228,11 @@ class EditorView extends NodeView {
 
       case "insertParagraph": {
         const { state, dispatch } = this;
-        splitBlock(state, dispatch);
+        const command = chainCommands(
+          splitListItem(state.schema.nodes.list_item),
+          splitBlock
+        );
+        command(state, dispatch);
         break;
       }
 

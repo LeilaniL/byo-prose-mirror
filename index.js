@@ -16,6 +16,9 @@ window.view = new EditorView(document.querySelector("#editor"), {
       schema.node("bullet_list", null, [
         schema.node("list_item", null, [schema.node("paragraph")]),
       ]),
+      schema.node("paragraph", null, [
+        schema.node("list_item", null, [schema.node("paragraph")]),
+      ]),
     ]),
   }),
 });
