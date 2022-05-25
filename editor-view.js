@@ -103,7 +103,7 @@ class TextView extends View {
     return node === this.node;
   }
 
-  domFromPos(pos, side) {
+  pointFromPos(pos, side) {
     return { node: this.dom, offset: pos };
   }
 
