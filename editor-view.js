@@ -283,16 +283,22 @@ class EditorView extends NodeView {
 
   onSelectionChange(event) {
     const domSelection = document.getSelection();
-    const { anchorNode, anchorOffset, focusNode, focusOffset } = domSelection;
 
-    const { doc, tr } = this.state;
-    const selection = TextSelection.create(
-      doc,
-      anchorNode.__view.pos + anchorOffset,
-      focusNode.__view.pos + focusOffset
-    );
+    try {
+      const { anchorNode, anchorOffset } = domSelection;
+      const anchorView = anchorNode.__view;
+      const anchor = anchorView.pos + anchorView.border + anchorOffset;
 
-    tr.setSelection(selection);
-    this.dispatch(tr);
+      const { focusNode, focusOffset } = domSelection;
+      const focusView = focusNode.__view;
+      const head = focusView.pos + focusView.border + focusOffset;
+
+      const { doc, tr } = this.state;
+      const selection = TextSelection.create(doc, anchor, head);
+      tr.setSelection(selection);
+      this.dispatch(tr);
+    } catch (error) {
+      console.warn(error);
+    }
   }
 }
