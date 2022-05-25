@@ -36,9 +36,11 @@ class View {
 
     let index = 0;
     let offset = 0;
-    
+
     if (!this.children.length) {
-      if (anchor)
+      const selection = document.getSelection();
+      selection.setBaseAndExtent(this.dom, 0, this.dom, 0);
+      return;
     }
 
     while (index < this.children.length) {
@@ -235,10 +237,15 @@ class EditorView extends NodeView {
   }
 
   update(node) {
-    super.update(node);
+    try {
+      document.removeEventListener("selectionchange", this.onSelectionChange);
+      super.update(node);
 
-    const { anchor, head } = this.state.selection;
-    this.setSelection(anchor, head);
+      const { anchor, head } = this.state.selection;
+      this.setSelection(anchor, head);
+    } finally {
+      document.addEventListener("selectionchange", this.onSelectionChange);
+    }
   }
 
   onBeforeInput(event) {
@@ -251,13 +258,13 @@ class EditorView extends NodeView {
         this.dispatch(tr);
         break;
       }
-        
+
       case "insertParagraph": {
         const { state, dispatch } = this;
         splitBlock(state, dispatch);
         break;
       }
-        
+
       case "deleteContentBackward": {
         const { selection, tr } = this.state;
         if (selection instanceof TextSelection) {
@@ -285,9 +292,7 @@ class EditorView extends NodeView {
       focusNode.__view.pos + focusOffset
     );
 
-    if (!selection.eq(this.state.selection)) {
-      tr.setSelection(selection);
-      this.dispatch(tr);
-    }
+    tr.setSelection(selection);
+    this.dispatch(tr);
   }
 }
