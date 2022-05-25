@@ -7,33 +7,37 @@ function toDOM(node) {
   return DOMSerializer.renderSpec(document, outputSpec);
 }
 
-class NodeView {
-  constructor(node, dom, contentDOM) {
-    this.node = node;
+class View {
+  constructor(parent, children, dom, contentDOM) {
+    this.parent = parent;
+    this.children = children;
     this.dom = dom;
     this.contentDOM = contentDOM;
-    this.parent = null;
-    this.children = [];
-    this.dom.__nodeView = this;
   }
+}
 
+class NodeView extends View {
+  constructor(parent, node, dom, contentDOM) {
+    super(parent, [], dom, contentDOM);
+    this.node = node;
+    this.updateChildren();
+  }
+  
   update(node) {
-    if (node.type !== this.node.type) {
-      return false;
+    if (this.node !== node) {
+      const parentDOM = this.parent.node.dom;
+      const { dom, contentDOM } = toDOM(node);
+      parentDOM.replaceChild(dom, this.dom);
+      
+      this.dom
+      this.node = node;
+      
     }
     
-    if (node !== this.node) {
-      const parentDOM = this.dom.parentDOM;
-      const { dom, contentDOM } = toDOM(node);
+    this.updateChildren();
+  }
 
-      parentDOM.replaceChild(dom, this.dom);
-
-      this.node = node;
-      this.dom = dom;
-      this.contentDOM = contentDOM;
-      this.children = [];
-    }
-
+  updateChildren() {
     this.node.forEach((child, offset, index) => {
       let childNodeView = this.children[index];
 
