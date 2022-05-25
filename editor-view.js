@@ -7,14 +7,6 @@ function toDOM(node) {
   return DOMSerializer.renderSpec(document, outputSpec);
 }
 
-function selectionToDOM(selection) {
-  let anchorNode;
-  let anchorOffset;
-  let focusNode;
-  let focusOffset;
-  selection
-}
-
 class View {
   constructor(parent, children, dom, contentDOM) {
     this.parent = parent;
@@ -31,9 +23,16 @@ class View {
       child.destroy();
     }
   }
-  
+
   update(node) {
     return false;
+  }
+  
+  setSelection(anchor, head) {
+    const from = Math.min(anchor, head);
+    const to = Math.max(anchor, head);
+    if (anchor)
+    
   }
 
   get pos() {
@@ -42,7 +41,7 @@ class View {
     }
 
     const index = this.parent.children.indexOf(this);
-    console.log('index', index)
+    console.log("index", index);
     const precedingSiblings = this.parent.children.slice(0, index);
     console.log(precedingSiblings);
     return precedingSiblings.reduce(
@@ -57,7 +56,7 @@ class TextView extends View {
     super(parent, [], dom);
     this.node = node;
   }
-  
+
   update(node) {
     return node === this.node;
   }
@@ -138,11 +137,9 @@ class EditorView extends NodeView {
     this.state = newState;
     this.update(this.state.doc);
   }
-  
+
   update(node) {
     super.update(node);
-    const 
-    document.selection.removeAllRanges();
   }
 
   onBeforeInput(event) {
