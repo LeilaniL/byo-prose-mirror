@@ -1,14 +1,20 @@
 const { DOMSerializer } = require('prosemirror-model');
 
 class NodeView {
-  constructor(node) {
-    this.dom = null;
-    this.contentDOM = null;
+  constructor(node, dom, contentDOM) {
+    this.node = node;
+    this.dom = dom;
+    this.contentDOM = contentDOM;
     this.parent = null;
     this.children = [];
   }
   
-  
+  get pos() {
+    if (this.parent) {
+      
+    }
+    
+  }
 }
 
 
