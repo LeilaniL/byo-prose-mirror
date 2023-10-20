@@ -84,10 +84,17 @@ class EditorView extends NodeView {
     super(state.doc, dom, null);
     this.state = state;
 
-    this.dom.contentEditable = true
+    this.onBeforeInput = this.onBeforeInput.bind(this);
+    this.dom.addEventListener("beforeinput", this.onBeforeInput);
+    this.dom.contentEditable = true;
   }
   
   destroy() {
     super.destroy();
+    this.dom.removeEventListener("beforeinput", this.onBeforeInput);
+  }
+  
+  onBeforeInput(event) {
+    event.preventDefault();
   }
 }
