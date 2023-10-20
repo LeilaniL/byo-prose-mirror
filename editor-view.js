@@ -35,15 +35,34 @@ class NodeView extends View {
     }
   }
   
+  update(node) {
+    if(!this.node.sameMarkup(node)) {
+      return false;
+    }
+    
+    this.node = node;
+    this.updateChildren();
+    return true;
+  }
+  
   updateChildren() {
     this.node.forEach((child, offset, index) => {
       const childView = this.children[index];
       if (childView) {
-        return;
+        const updated = childView.update(child);
+        if (updated) {
+          return;
+        }
+
+        childView.destroy();
       }
 
       const childDOM = renderNode(child);
-      this.dom.appendChild(childDOM);
+      if (childView) {
+        this.dom.replaceChild(childDOM, childView.dom);
+      } else {
+        this.dom.appendChild(childDOM);
+      }
 
       if (child.isText) {
         this.children[index] = new TextView(child, childDOM, this);
@@ -51,6 +70,11 @@ class NodeView extends View {
         this.children[index] = new NodeView(child, childDOM, this);
       }
     });
+    
+    while (this.children.length > this.node.childCount) {
+      this.children.pop().destroy();
+      this.dom.removeChild(this.dom.lastChild);
+    }
   }
 };
 
