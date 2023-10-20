@@ -1,3 +1,5 @@
+const { TextSelection } = require("prosemirror-state");
+
 function renderNode(node) {
   if(node.isText) {
     return document.createTextNode(node.text);
@@ -11,10 +13,36 @@ class View {
     this.node = node;
     this.dom = dom;
     this.parent = parent;
+    this.dom.__view = this;
   }
   
   destroy() {
     this.parent = null;
+    this.dom.__view = null;
+  }
+  
+  get border() {
+    return 0;
+  }
+
+  get pos() {
+    const { parent } = this;
+
+    if (!parent) {
+      return -1;
+    }
+
+    const siblings = parent.children;
+    const index = siblings.indexOf(this);
+    const precedingSiblings = siblings.slice(0, index);
+    return precedingSiblings.reduce(
+      (pos, sibling) => pos + sibling.size,
+      parent.pos + parent.border
+    );
+  }
+
+  get size() {
+    return this.node.nodeSize;
   }
 }
 
@@ -37,6 +65,10 @@ class NodeView extends View {
     for (const child of this.children) {
       child.destroy();
     }
+  }
+  
+  get border() {
+    return this.node.isLeaf ? 0 : 1;
   }
   
   update(node) {
@@ -92,12 +124,17 @@ class EditorView extends NodeView {
 
     this.onBeforeInput = this.onBeforeInput.bind(this);
     this.dom.addEventListener("beforeinput", this.onBeforeInput);
+    
+    this.onSelectionChange = this.onSelectionChange.bind(this);
+    document.addEventListener("selectionchange", this.onSelectionChange);
+    
     this.dom.contentEditable = true;
   }
   
   destroy() {
     super.destroy();
     this.dom.removeEventListener("beforeinput", this.onBeforeInput);
+    document.removeEventListener("selectionchange", this.onSelectionChange);
   }
   
   dispatch(transformation) {
@@ -119,6 +156,28 @@ class EditorView extends NodeView {
         tr.insertText(event.data);
         this.dispatch(tr);
       }
+    }
+  }
+  
+  onSelectionChange(event) {
+    const { doc, tr } = this.state;
+
+    const domSelection = document.getSelection();
+
+    const { anchorNode, anchorOffset } = domSelection;
+    const anchorView = anchorNode.__view;
+    const anchor = anchorView.pos + anchorView.border + anchorOffset;
+    const $anchor = doc.resolve(anchor);
+
+    const { focusNode, focusOffset } = domSelection;
+    const headView = focusNode.__view;
+    const head = headView.pos + headView.border + focusOffset;
+    const $head = doc.resolve(head);
+
+    const selection = TextSelection.between($anchor, $head);
+    if (!this.state.selection.eq(selection)) {
+      tr.setSelection(selection);
+      this.dispatch(tr);
     }
   }
 }
