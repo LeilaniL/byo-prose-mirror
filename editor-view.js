@@ -24,6 +24,7 @@ class NodeView extends View {
   constructor(node, dom, parent) {
     super(node, dom, parent);
     this.children = [];
+    this.updateChildren();
   }
   
   destroy() {
@@ -33,15 +34,33 @@ class NodeView extends View {
       child.destroy();
     }
   }
+  
+  updateChildren() {
+    this.node.forEach((child, offset, index) => {
+      const childView = this.children[index];
+      if (childView) {
+        return;
+      }
+
+      const childDOM = renderNode(child);
+      this.dom.appendChild(childDOM);
+
+      if (child.isText) {
+        this.children[index] = new TextView(child, childDOM, this);
+      } else {
+        this.children[index] = new NodeView(child, childDOM, this);
+      }
+    });
+  }
 };
 
 
-class EditorView {
+class EditorView extends NodeView {
   constructor(dom, { state }) {
-    this.dom = dom;
+    super(state.doc, dom, null);
     this.state = state;
 
-    this.dom.contentEditable = true;
+    this.dom.contentEditable = true
   }
   
   destroy() {
