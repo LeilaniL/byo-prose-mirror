@@ -18,7 +18,11 @@ class View {
   }
 }
 
-class TextView extends View {};
+class TextView extends View {
+  update() {
+    return false;
+  }
+};
 
 class NodeView extends View {
   constructor(node, dom, parent) {
@@ -37,11 +41,13 @@ class NodeView extends View {
   
   update(node) {
     if(!this.node.sameMarkup(node)) {
+      console.log("Can't update");
       return false;
     }
     
     this.node = node;
     this.updateChildren();
+    console.log("Updated!");
     return true;
   }
   
@@ -94,7 +100,25 @@ class EditorView extends NodeView {
     this.dom.removeEventListener("beforeinput", this.onBeforeInput);
   }
   
+  dispatch(transformation) {
+    const newState = this.state.apply(transformation);
+    this.setState(newState);
+  }
+
+  setState(newState) {
+    this.state = newState;
+    this.update(this.state.doc);
+  }
+  
   onBeforeInput(event) {
     event.preventDefault();
+    
+    switch (event.inputType) {
+      case "insertText": {
+        const { tr } = this.state;
+        tr.insertText(event.data);
+        this.dispatch(tr);
+      }
+    }
   }
 }
