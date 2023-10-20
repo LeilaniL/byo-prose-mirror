@@ -44,11 +44,40 @@ class View {
   get size() {
     return this.node.nodeSize;
   }
+  
+  pointFromPos(pos, preferBefore) {
+    let index = 0;
+    let offset = 0;
+
+    while (index < this.children.length) {
+      const child = this.children[index];
+      const isLastChild = index === this.children.length - 1;
+
+      const { border, size } = child;
+      const start = offset + border;
+      const end = offset + size - border;
+      const after = end + border;
+
+      if (pos < after || (pos === after && preferBefore) || isLastChild) {
+        return child.pointFromPos(pos - start, preferBefore);
+      }
+
+      index = index + 1;
+      offset = offset + size;
+    }
+
+    return { node: this.dom, offset: pos };
+  }
+
 }
 
 class TextView extends View {
   update() {
     return false;
+  }
+  
+  pointFromPos(pos, preferBefore) {
+    return { node: this.dom, offset: pos };
   }
 };
 
@@ -146,6 +175,25 @@ class EditorView extends NodeView {
     this.state = newState;
     this.update(this.state.doc);
   }
+  
+  update(node) {
+    super.update(node);
+
+    const { anchor, head } = this.state.selection;
+    const backward = head > anchor;
+
+    const anchorPoint = this.pointFromPos(anchor, backward);
+    const focusPoint = this.pointFromPos(head, !backward);
+
+    const domSelection = document.getSelection();
+    domSelection.setBaseAndExtent(
+      anchorPoint.node,
+      anchorPoint.offset,
+      focusPoint.node,
+      focusPoint.offset
+    );
+  }
+
   
   onBeforeInput(event) {
     event.preventDefault();
